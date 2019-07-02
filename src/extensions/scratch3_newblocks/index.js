@@ -14,7 +14,7 @@ class Scratch3NewBlocks {
     getInfo () {
         return {
           id: 'newblocks',
-          name: 'New Blocks',
+          name: 'NCMB Blocks',
           blocks: [
                 {
                     opcode: 'NCMBconfig',

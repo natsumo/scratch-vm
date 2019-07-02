@@ -4,6 +4,7 @@ const Cast = require('../../util/cast');
 const log = require('../../util/log');
 const http = require("https");
 var Url     = require("url");
+var options = {};
 
 class Scratch3NewBlocks {
     constructor (runtime) {
@@ -12,17 +13,36 @@ class Scratch3NewBlocks {
 
     getInfo () {
         return {
-            id: 'newblocks',
-            name: 'New Blocks',
-            blocks: [
+          id: 'newblocks',
+          name: 'New Blocks',
+          blocks: [
                 {
-                    opcode: 'writeLog',
+                    opcode: 'NCMBconfig',
                     blockType: BlockType.COMMAND,
-                    text: 'log [TEXT]',
+                    text: 'API KEY [APPLICATIONKEY], [CLIENTKEY]',
                     arguments: {
-                        TEXT: {
+                        APPLICATIONKEY: {
                             type: ArgumentType.STRING,
-                            defaultValue: "hello"
+                            defaultValue: "applicationKey"
+                        },
+                        CLIENTKEY: {
+                            type: ArgumentType.STRING,
+                            defaultValue: "clientKey"
+                        }
+                    }
+                },
+                {
+                    opcode: 'saveData',
+                    blockType: BlockType.COMMAND,
+                    text: 'saveData [KEY], [VALUE]',
+                    arguments: {
+                        KEY: {
+                            type: ArgumentType.STRING,
+                            defaultValue: "key"
+                        },
+                        VALUE: {
+                            type: ArgumentType.STRING,
+                            defaultValue: "value"
                         }
                     }
                 }
@@ -32,24 +52,27 @@ class Scratch3NewBlocks {
         };
     }
 
-    writeLog (args) {
-        const text = Cast.toString(args.TEXT);
-        log.log(text);
+    NCMBconfig (args) {
+        const applicationKey = Cast.toString(args.APPLICATIONKEY);
+        const clientKey = Cast.toString(args.CLIENTKEY);
+        sendRequest(applicationKey, clientKey);
+    }
 
-        sendRequest();
+    saveData (args) {
+        const key = Cast.toString(args.KEY);
+        const value = Cast.toString(args.VALUE);
+        sendSaveRequest(options, key, value)
     }
 }
 
-function sendRequest() {
+function sendRequest(applicationKey, clientKey) {
     var opts = {};
     var hostname = "mbaas.api.nifcloud.com";
-    var path = '/2013-09-01/classes/TestClass'
+    var path = '/2013-09-01/classes/Scratch'
     var timestamp = new Date().toISOString();
     var method = "POST";
-    // var apiKey = "YOUR-APPLICATION-KEY";
-    // var clientKey = "YOUR-CLIENT-KEY";
-    var apiKey = "d7210a1e99e10032fd24086555748bafd42f3a077d9aee793839047c7740afdb";
-    var clientKey = "cf91a7cb1e4e7be951a9b0b2a45daf8e605befc6eabf506defa73ef55378287e";
+    var apiKey = applicationKey;
+    var clientKey = clientKey;
 
     var parsedUrl = Url.parse(path);
     parsedUrl.hostname = hostname;
@@ -85,26 +108,29 @@ function sendRequest() {
     };
     console.log(sig);
 
-    var options = {
+    options = {
     hostname: hostname,
     port: 443,
     path: path,
     method: method,
     headers: headers
     };
+}
+
+function sendSaveRequest(options, key, value) {
     var req = http.request(options, function(res) {
-        console.log('Status: ' + res.statusCode);
-        console.log('Headers: ' + JSON.stringify(res.headers));
-        res.setEncoding('utf8');
-        res.on('data', function (body) {
-            console.log('Body: ' + body);
-        });
+          console.log('Status: ' + res.statusCode);
+          console.log('Headers: ' + JSON.stringify(res.headers));
+          res.setEncoding('utf8');
+          res.on('data', function (body) {
+              console.log('Body: ' + body);
+          });
         });
         req.on('error', function(e) {
         console.log('problem with request: ' + e.message);
     });
     // write data to request body
-    req.write('{"msg": "Hello World"}');
+    req.write('{"'+ key + '": "' + value + '"}');
     req.end()
 }
 

@@ -6,6 +6,8 @@ const http = require("https");
 var Url     = require("url");
 
 var options = {};
+// データ
+var saveData = {};
 // クエリ
 var querys = {};
 // APIキー
@@ -48,14 +50,10 @@ class Scratch3NewBlocks {
                     }
                 },
                 {
-                    opcode: 'saveData',
+                    opcode: 'setData',
                     blockType: BlockType.COMMAND,
-                    text: '【保存】[CLASSNAME]の[KEY]に値[VALUE]を保存する',
+                    text: '【データ】[KEY]に値[VALUE]を設定',
                     arguments: {
-                        CLASSNAME: {
-                            type: ArgumentType.STRING,
-                            defaultValue: "className"
-                        },
                         KEY: {
                             type: ArgumentType.STRING,
                             defaultValue: "key"
@@ -63,6 +61,17 @@ class Scratch3NewBlocks {
                         VALUE: {
                             type: ArgumentType.STRING,
                             defaultValue: "value"
+                        }
+                    }
+                },
+                {
+                    opcode: 'saveData',
+                    blockType: BlockType.COMMAND,
+                    text: '【保存】[CLASSNAME]にデータを保存する',
+                    arguments: {
+                        CLASSNAME: {
+                            type: ArgumentType.STRING,
+                            defaultValue: "className"
                         }
                     }
                 },
@@ -163,14 +172,27 @@ class Scratch3NewBlocks {
         clientKey = Cast.toString(args.CLIENTKEY);
     }
 
+    setData (args) {
+      const key = Cast.toString(args.KEY);
+      const value = Cast.toString(args.VALUE);
+      if (key in saveData){
+        console.log('Error: 同じkeyを設定しています。');
+      } else {
+        saveData[key] = value;
+      }
+
+    }
+
     saveData (args) {
         const className = Cast.toString(args.CLASSNAME);
-        const key = Cast.toString(args.KEY);
-        const value = Cast.toString(args.VALUE);
         const method = 'POST';
         const opts = {};
         sendRequest(applicationKey, clientKey, className, method, opts);
-        sendSaveRequest(options, key, value);
+        if (Object.keys(saveData).length) {
+          sendSaveRequest(options, saveData);
+        } else {
+          console.log('Error: 値が設定されていません。');
+        }
     }
 
     fetchAllData (args) {
@@ -329,21 +351,24 @@ function sendRequest(applicationKey, clientKey, className, method, opts) {
     };
 }
 
-function sendSaveRequest(options, key, value) {
+function sendSaveRequest(options, saveData) {
     var req = http.request(options, function(res) {
-          console.log('Status: ' + res.statusCode);
-          console.log('Headers: ' + JSON.stringify(res.headers));
-          res.setEncoding('utf8');
-          res.on('data', function (body) {
-              console.log('Body: ' + body);
-          });
-        });
-        req.on('error', function(e) {
-        console.log('problem with request: ' + e.message);
+      console.log('Status: ' + res.statusCode);
+      console.log('Headers: ' + JSON.stringify(res.headers));
+      res.setEncoding('utf8');
+      res.on('data', function (body) {
+          console.log('Body: ' + body);
+      });
+    });
+    req.on('error', function(e) {
+      console.log('problem with request: ' + e.message);
     });
     // write data to request body
-    req.write('{"'+ key + '": "' + value + '"}');
+    req.write(JSON.stringify(saveData));
     req.end();
+    // 設定データを空に
+    saveData = {};
+
 }
 
 function sendFetchAllRequest(options) {

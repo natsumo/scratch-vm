@@ -176,7 +176,7 @@ class Scratch3NewBlocks {
       const key = Cast.toString(args.KEY);
       const value = Cast.toString(args.VALUE);
       if (key in saveData){
-        console.log('Error: 同じkeyを設定しています。');
+        console.log('Error: 同じkeyに値を設定しています: {"key":"' + saveData[key] + '"}' );
       } else {
         saveData[key] = value;
       }
@@ -193,6 +193,8 @@ class Scratch3NewBlocks {
         } else {
           console.log('Error: 値が設定されていません。');
         }
+        // 設定データを空に
+        saveData = {};
     }
 
     fetchAllData (args) {
@@ -205,6 +207,8 @@ class Scratch3NewBlocks {
         console.log(JSON.stringify(opts));
         sendRequest(applicationKey, clientKey, className, method, opts);
         sendFetchAllRequest(options);
+        // クエリを空に
+        query = {};
     }
 
     order (args) {
@@ -366,9 +370,6 @@ function sendSaveRequest(options, saveData) {
     // write data to request body
     req.write(JSON.stringify(saveData));
     req.end();
-    // 設定データを空に
-    saveData = {};
-
 }
 
 function sendFetchAllRequest(options) {
@@ -387,8 +388,6 @@ function sendFetchAllRequest(options) {
         console.log('problem with request: ' + e.message);
     });
     req.end();
-    // クエリを空に
-    query = {};
 }
 
 module.exports = Scratch3NewBlocks;
